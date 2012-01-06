@@ -1,0 +1,41 @@
+<?php
+/**
+* @file
+* Tests for the mfnodecomments module
+*/
+class MfnodecommentsTestCase extends DrupalWebTestCase {
+
+public function setup() {
+   parent::setup('mfnodecomments');
+}
+
+  public function getInfo() {
+    return array(
+      'name' => 'mfnodecomments module block functionality',
+      'description' => 'Test blocks in the mfnodecomments module.',
+      'group' => 'mfnodecomments',
+    );
+  }
+
+  public function testBlockInfo() {
+    $info = module_invoke('mfnodecomments', 'block_info');
+ 
+   $this->assertEqual(1, count($info),
+    t('Module defines a block.'));
+
+    $this->assertTrue(isset($info['list_modules']),
+    t('Module list exists.'));
+  }
+
+  public function testBlockView() {
+    $data = module_invoke('mfnodecomments', 'block_view',
+      'list_modules');
+
+    $this->assertTrue(is_array($data),
+    t('Block returns renderable array.'));
+
+    $this->assertEqual(t('Emnets seneste kommentarer'), $data['subject'],
+    t('Subject is set'));
+  }
+
+}

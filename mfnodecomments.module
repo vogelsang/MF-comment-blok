@@ -1,0 +1,144 @@
+<?php
+// $Id$
+/**
+* @file
+* A module exemplifying Drupal coding practices and APIs.
+*
+* This module provides a block that lists all of the
+* installed modules. It illustrates coding standards,
+* practices, and API use for Drupal 7.
+*/
+/**
+* Implements hook_help().
+*/
+function mfnodecomments_help($path, $arg) {
+  if ($path == 'admin/help#mfnodecomments') {
+    return t('A module that shows a topics recents comments in a blok.');
+  }
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function mfnodecomments_block_info() {
+  $blocks = array();
+  
+  $blocks['mfnodecomments'] = array(
+      'info' => t('MF - vis kommentarer til et forumemne'),
+//      'status' => TRUE,
+//      'region' => 'content',
+      'weight' => 0,
+      'visibility' => 1,
+      'cache' => DRUPAL_NO_CACHE,
+  );
+  
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_configure().
+ */
+function mfnodecomments_block_configure($delta) {
+  $form = array();
+  
+  switch($delta) {
+    case 'mfnodecomments':
+      $form['mfnodecomments_count'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Configure number of comments to dispay'),
+          '#size' => 6,
+          '#description' => t('Enter the number of comments to display in the blok'),
+          '#default_value' => variable_get('mfnodecomments_count', 5),
+      );
+      break;
+  }
+  
+  return $form;
+}
+
+/**
+ * Implements hook_block_safe().
+ */
+function mfnodecomments_block_safe($delta = '', $edit = array()) {
+  switch ($delta) {
+    case 'mfnodecomments':
+      variable_set('mfnodecomments_count', (int)$edit['mfnodecomments_count']);
+      break;
+  }
+  return;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function mfnodecomments_block_view( $block_name = '' ) {
+
+  
+  if ($block_name == 'list_topic_comments') {
+    if (!user_access('View comments')) {
+      return;
+    }
+    
+    if(tjekNodeType() != true) {
+      return;
+    }
+   
+    $block = array(
+        'subject' => t('Emnets seneste kommentarer'),
+        'content' =>  mfnodecomments_get_topic_comments(), //$content,
+    );  
+          
+    return $block;
+  }
+}
+
+/*
+ * Tjek node type
+ */
+function tjekNodeType() {
+  if (arg(0) != 'node') {
+    return false;
+  }
+  
+  $node = node_load(arg(1));
+
+  if (!isset ($node)) {
+    return false; // returner hvis vi ikke har fat i en node
+  }
+  
+  if (!isset($node -> type)) {
+    return false;
+  }
+  
+  $type = $node -> type;
+  
+  if ($type != 'forum') {
+    return false;
+  } 
+  
+  return true;
+}
+
+/**
+ * Funktion til at hente kommentarer til forumemne
+ */
+function mfnodecomments_get_topic_comments() {
+  $node = node_load(arg(1));
+  $nid = $node -> nid;
+  $noofcomments = variable_get('mfnodecomments_count', 5);
+  
+  $result = db_query("SELECT * from `comment` WHERE `nid` =  $nid ORDER BY `created` DESC limit 0, $noofcomments");
+  
+  $items = array();
+  
+  foreach ($result as $row) {
+    $items[] = l($row-> subject, 'comment/' . $row->cid, array(
+          'fragment' => 'comment-' . $row->cid,
+        )
+  );
+  }
+  
+  return array('#markup' => theme('item_list', array('items' => $items)));
+}
+
+

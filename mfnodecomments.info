@@ -1,0 +1,8 @@
+name = Forum kommentarer i blok
+description = show most recent comments to a forum topic in a blok
+package = martinusforum
+core = 7.x
+files[] = mfnodecomments.module
+files[] = mfnodecomments.test
+
+;dependencies[] = forum
